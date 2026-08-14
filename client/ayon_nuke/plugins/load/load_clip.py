@@ -366,21 +366,26 @@ class LoadClip(plugin.NukeLoader):
                 "fps": str(version_attributes.get("fps"))
             }
 
-            last_version_entity = ayon_api.get_last_version_by_product_id(
-                project_name, version_entity["productId"], fields={"id"}
-            )
-            # change color of read_node
-            if version_entity["id"] == last_version_entity["id"]:
-                color_value = "0x4ecd25ff"
-            else:
-                color_value = "0xd84f20ff"
-            read_node["tile_color"].setValue(int(color_value, 16))
-
-            # Update the imprinted representation
+            # Update the imprinted representation before the cosmetic tile
+            # color lookup, so container data always matches the file knob
+            # set above even if resolving the last version fails.
             update_container(read_node, updated_dict)
             self.log.info(
                 "updated to version: {}".format(version_entity["version"])
             )
+
+            last_version_entity = ayon_api.get_last_version_by_product_id(
+                project_name, version_entity["productId"], fields={"id"}
+            )
+            # change color of read_node
+            if (
+                last_version_entity
+                and version_entity["id"] == last_version_entity["id"]
+            ):
+                color_value = "0x4ecd25ff"
+            else:
+                color_value = "0xd84f20ff"
+            read_node["tile_color"].setValue(int(color_value, 16))
 
         if add_retime and version_data.get("retime"):
             self._make_retimes(
